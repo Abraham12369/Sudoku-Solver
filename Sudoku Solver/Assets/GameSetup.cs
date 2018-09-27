@@ -106,48 +106,115 @@ public class GameSetup : MonoBehaviour {
         
         
     }
-    
+    public int colorIndex=-1;
 
-
-    GameObject InputFieldPlaceholder;
-
-    void FillNumbers()
+    public void FillNumbers()
     {
-        for (int squareNumber = 1; squareNumber < 8; squareNumber++)
+        Debug.ClearDeveloperConsole();
+        if (colorIndex!=-1)
         {
-            Debug.Log("reached square check");
-            for (int i = 0; i < 9; i++)
+            InputFieldPanel.transform.GetChild(colorIndex).GetComponent<Image>().color = Color.white;
+        }
+        for (int i = 0; i < 9; i++)
+        {
+            for (int squareNumber = 0; squareNumber < 8; squareNumber++)
             {
-                Debug.Log("checking number: " + i);
+                //Debug.Log("checking number: " + i);
                 int count = 0;
-                foreach (Vector3 l in squareChildCoords[squareNumber])
+                int rowCheck = Mathf.FloorToInt(squareNumber / 3) * 3;
+                int columnCheck = Mathf.FloorToInt(squareNumber % 3) * 3;
+
+                for (int y=rowCheck;y<rowCheck+3;y++)
                 {
-                    Debug.Log(l);
-                    if (numbers[(int)l.x, (int)l.y].Contains(i))
+                    for(int x=columnCheck;x<columnCheck+3;x++)
                     {
-                        count++;
-                    }
-                }
-                Debug.Log("current number count: " + count);
-                if (count == 1)
-                {
-                    foreach (Vector3 l in squareChildCoords[squareNumber])
-                    {
-                        if (numbers[(int)l.x, (int)l.y].Contains(i))
+                        if (numbers[y,x].Contains(i))
                         {
-                            CurrentBoard[(int)l.x, (int)l.y] = i;
-                            int indexNumber = (int)l.x * 9 + (int)l.y;
-                            InputFieldPanel.transform.GetChild(indexNumber).Find("Placeholder").GetComponent<Text>().text = i.ToString();
-                            numbers[(int)l.x, (int)l.y].Clear();
-                            rows[(int)l.x].Remove(i);
-                            columns[(int)l.y].Remove(i);
-                            square[squareNumber].Remove(i);
-                            Debug.Log("found at " + l.x + "\t" + l.y + "\t Index Number: " + indexNumber);
+                        count++;
                         }
                     }
                 }
+                
+                //Debug.Log("current number count: " + count);
+                if (count == 1)
+                {
+                    for (int y = rowCheck; y < rowCheck + 3; y++) //check through 3x3
+                    {
+                        for (int x = columnCheck; x < columnCheck + 3; x++)
+                        {
+                            if (numbers[y, x].Contains(i)) //if number is present
+                            {
+                                CurrentBoard[y, x] = i;
+                                int indexNumber = y * 9 + x;
+                                InputFieldPanel.transform.GetChild(indexNumber).Find("Placeholder").GetComponent<Text>().text = i.ToString();
+                                numbers[y, x].Clear();                      //clear current tile
+                                for (int z = 0; z < 9; z++)                 //clear column and row
+                                {
+                                    numbers[y, z].Remove(i);
+                                    numbers[z, x].Remove(i);
+                                }
+
+                                for (int y2 = rowCheck; y2 < rowCheck + 3; y2++) //check through 3x3 and clear
+                                {
+                                    for (int x2 = columnCheck; x2 < columnCheck + 3; x2++)
+                                    {
+                                        numbers[y2, x2].Remove(i);
+                                    }
+                                }
+
+                                rows[y].Remove(i);          //remove row and column and square numbers
+                                columns[x].Remove(i);
+                                square[squareNumber].Remove(i);
+                                //Debug.Log("square:" + squareNumber);
+                                //Debug.Log("row:" + rowCheck + "\t col" + columnCheck);
+                                colorIndex = indexNumber;
+                                InputFieldPanel.transform.GetChild(colorIndex).GetComponent<Image>().color = Color.green;
+                                Debug.Log("condition checked");
+                                return;
+                                //Debug.Log("found at " + l.x + "\t" + l.y + "\t Index Number: " + indexNumber);
+                            }
+                        }
+                    }                    
+                }
             }
 
+        }
+
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                if (numbers[i, j].Count == 1)
+                {
+                    int number = numbers[i, j][0];
+                    CurrentBoard[i, j] = number;
+                    int indexNumber = i * 9 + j;
+                    InputFieldPanel.transform.GetChild(indexNumber).Find("Placeholder").GetComponent<Text>().text = number.ToString();
+                    numbers[i, j].Clear();
+                    for (int z = 0; z < 9; z++)
+                    {
+                        numbers[i, z].Remove(number);
+                        numbers[z, j].Remove(number);
+                    }
+                    int rowCheck = Mathf.FloorToInt(i / 3) * 3;
+                    int columnCheck = Mathf.FloorToInt(j / 3) * 3;
+                    for (int y2 = rowCheck; y2 < rowCheck + 3; y2++) //check through 3x3 and clear
+                    {
+                        for (int x2 = columnCheck; x2 < columnCheck + 3; x2++)
+                        {
+                            numbers[y2, x2].Remove(number);
+                        }
+                    }
+                    rows[i].Remove(number);
+                    columns[j].Remove(number);
+                    colorIndex = i * 9 + j;
+                    InputFieldPanel.transform.GetChild(colorIndex).GetComponent<Image>().color = Color.green;
+                    Debug.Log("single checked");
+                    Debug.Log(rowCheck);
+                    Debug.Log(columnCheck);
+                    return;
+                }
+            }
         }
     }
 
@@ -155,7 +222,6 @@ public class GameSetup : MonoBehaviour {
 	void Update () {
 
         FillNumbers();
-
         for (int i = 0; i < 9; i++)
         {
             string rowstring = "";
